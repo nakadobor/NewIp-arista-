@@ -49,9 +49,11 @@ jobs:
       - name: Prepare Bank
         run: |
           mkdir -p output
+
           if [ ! -s output/ip_bank.txt ]; then
             python downloader.py
           fi
+
           if [ ! -s output/clean_ips.txt ]; then
             python cleaner.py
           fi
@@ -268,7 +270,7 @@ jobs:
           path: output
         continue-on-error: true
 
-      - name: Finalize with Limit
+      - name: Finalize
         run: |
           python main.py --finalize
 
@@ -284,12 +286,15 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           mkdir -p output
+
           [ -f output/best_ips.txt ] && git add output/best_ips.txt
           [ -f output/domains.txt ] && git add output/domains.txt
           [ -f output/results.txt ] && git add output/results.txt
           [ -f output/scan_cursor.txt ] && git add output/scan_cursor.txt
           [ -f output/current_part.txt ] && git add output/current_part.txt
+
           [ -f output/tcp_live.txt ] && git add output/tcp_live.txt
           [ -f output/tls_live.txt ] && git add output/tls_live.txt
           [ -f output/https_live.txt ] && git add output/https_live.txt
@@ -297,7 +302,7 @@ jobs:
           [ -f output/scanned_cache.txt ] && git add output/scanned_cache.txt
           [ -f output/geo_cache.json ] && git add output/geo_cache.json
           [ -f output/live_bank.txt ] && git add output/live_bank.txt
-          [ -f output/score_cache.json ] && git add output/score_cache.json
+
           git diff --cached --quiet || (
             git commit -m "ARISTA $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
             git push
