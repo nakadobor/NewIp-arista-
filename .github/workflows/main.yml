@@ -41,22 +41,24 @@ jobs:
 
       - name: Restore Rolling State
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: arista-output
           path: output
-        continue-on-error: true
 
       - name: Prepare Bank
         run: |
           mkdir -p output
 
           if [ ! -s output/ip_bank.txt ]; then
-            python downloader.py
+            python downloader.py || true
           fi
 
           if [ ! -s output/clean_ips.txt ]; then
-            python cleaner.py
+            python cleaner.py || true
           fi
+
+          touch output/.keep
 
       - name: Save Rolling State
         uses: actions/upload-artifact@v4
@@ -85,14 +87,14 @@ jobs:
 
       - name: Restore State
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: arista-output
           path: output
-        continue-on-error: true
 
       - name: TCP Scan
         run: |
-          python main.py --tcp
+          python main.py --tcp || true
 
       - name: Save State
         uses: actions/upload-artifact@v4
@@ -121,14 +123,14 @@ jobs:
 
       - name: Restore State
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: arista-output
           path: output
-        continue-on-error: true
 
       - name: TLS Scan
         run: |
-          python main.py --tls
+          python main.py --tls || true
 
       - name: Save State
         uses: actions/upload-artifact@v4
@@ -157,14 +159,14 @@ jobs:
 
       - name: Restore State
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: arista-output
           path: output
-        continue-on-error: true
 
       - name: HTTPS Validation
         run: |
-          python main.py --https
+          python main.py --https || true
 
       - name: Save State
         uses: actions/upload-artifact@v4
@@ -193,14 +195,14 @@ jobs:
 
       - name: Restore State
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: arista-output
           path: output
-        continue-on-error: true
 
       - name: Fingerprint
         run: |
-          python main.py --fp
+          python main.py --fp || true
 
       - name: Save State
         uses: actions/upload-artifact@v4
@@ -229,14 +231,14 @@ jobs:
 
       - name: Restore State
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: arista-output
           path: output
-        continue-on-error: true
 
       - name: GEO
         run: |
-          python main.py --geo
+          python main.py --geo || true
 
       - name: Save State
         uses: actions/upload-artifact@v4
@@ -265,14 +267,14 @@ jobs:
 
       - name: Restore State
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: arista-output
           path: output
-        continue-on-error: true
 
       - name: Finalize
         run: |
-          python main.py --finalize
+          python main.py --finalize || true
 
       - name: Save Final State
         uses: actions/upload-artifact@v4
