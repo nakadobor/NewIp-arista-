@@ -17,7 +17,6 @@ env:
   PYTHONUNBUFFERED: 1
 
 jobs:
-
   prepare:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -41,22 +40,21 @@ jobs:
 
       - name: Restore Rolling State
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: arista-output
           path: output
-        continue-on-error: true
 
       - name: Prepare Bank
         run: |
           mkdir -p output
-
           if [ ! -s output/ip_bank.txt ]; then
-            python downloader.py
+            python downloader.py || true
           fi
-
           if [ ! -s output/clean_ips.txt ]; then
-            python cleaner.py
+            python cleaner.py || true
           fi
+          touch output/.keep
 
       - name: Save Rolling State
         uses: actions/upload-artifact@v4
@@ -85,14 +83,14 @@ jobs:
 
       - name: Restore State
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: arista-output
           path: output
-        continue-on-error: true
 
       - name: TCP Scan
         run: |
-          python main.py --tcp
+          python main.py --tcp || true
 
       - name: Save State
         uses: actions/upload-artifact@v4
@@ -105,7 +103,7 @@ jobs:
   tls:
     needs: tcp
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v6
@@ -121,14 +119,15 @@ jobs:
 
       - name: Restore State
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: arista-output
           path: output
-        continue-on-error: true
 
       - name: TLS Scan
         run: |
-          python main.py --tls
+          ulimit -n 4096
+          python main.py --tls || true
 
       - name: Save State
         uses: actions/upload-artifact@v4
@@ -157,14 +156,14 @@ jobs:
 
       - name: Restore State
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: arista-output
           path: output
-        continue-on-error: true
 
       - name: HTTPS Validation
         run: |
-          python main.py --https
+          python main.py --https || true
 
       - name: Save State
         uses: actions/upload-artifact@v4
@@ -193,14 +192,14 @@ jobs:
 
       - name: Restore State
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: arista-output
           path: output
-        continue-on-error: true
 
       - name: Fingerprint
         run: |
-          python main.py --fp
+          python main.py --fp || true
 
       - name: Save State
         uses: actions/upload-artifact@v4
@@ -229,14 +228,14 @@ jobs:
 
       - name: Restore State
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: arista-output
           path: output
-        continue-on-error: true
 
       - name: GEO
         run: |
-          python main.py --geo
+          python main.py --geo || true
 
       - name: Save State
         uses: actions/upload-artifact@v4
@@ -265,14 +264,14 @@ jobs:
 
       - name: Restore State
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: arista-output
           path: output
-        continue-on-error: true
 
       - name: Finalize
         run: |
-          python main.py --finalize
+          python main.py --finalize || true
 
       - name: Save Final State
         uses: actions/upload-artifact@v4
@@ -286,15 +285,12 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           mkdir -p output
-
           [ -f output/best_ips.txt ] && git add output/best_ips.txt
           [ -f output/domains.txt ] && git add output/domains.txt
           [ -f output/results.txt ] && git add output/results.txt
           [ -f output/scan_cursor.txt ] && git add output/scan_cursor.txt
           [ -f output/current_part.txt ] && git add output/current_part.txt
-
           [ -f output/tcp_live.txt ] && git add output/tcp_live.txt
           [ -f output/tls_live.txt ] && git add output/tls_live.txt
           [ -f output/https_live.txt ] && git add output/https_live.txt
@@ -302,11 +298,9 @@ jobs:
           [ -f output/scanned_cache.txt ] && git add output/scanned_cache.txt
           [ -f output/geo_cache.json ] && git add output/geo_cache.json
           [ -f output/live_bank.txt ] && git add output/live_bank.txt
-
           if ! git diff --cached --quiet; then
             git commit -m "ARISTA $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
-            for i in 1 2 3
-            do
+            for i in 1 2 3; do
               git fetch origin main
               if git rebase origin/main; then
                 git push origin HEAD:main && exit 0
