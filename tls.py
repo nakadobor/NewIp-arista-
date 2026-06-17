@@ -1,5 +1,5 @@
 import ssl
-import socket
+import asyncio
 import hashlib
 import json
 
@@ -28,9 +28,10 @@ def cert_meta(cert_bin, cert):
         "sha256": sha256
     }
 
-def tls_check(ip, port, timeout=3):
+async def tls_check_async(ip, port, timeout=1.5):
     cfg = load_config()
-    sni_hosts = cfg.get("sni_hosts", [])
+    sni_hosts = cfg.get("sni_hosts", ["cloudflare.com"])
+    
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
@@ -39,19 +40,38 @@ def tls_check(ip, port, timeout=3):
     except:
         pass
 
-    for sni in sni_hosts:
+    for sni in sni_hosts[:2]:
         try:
-            with socket.create_connection((ip, port), timeout=timeout) as sock:
-                with ctx.wrap_socket(sock, server_hostname=sni) as ssock:
-                    cert = ssock.getpeercert()
-                    cert_bin = ssock.getpeercert(binary_form=True)
-                    meta = cert_meta(cert_bin, cert)
-                    return True, {
-                        "cert": cert,
-                        "meta": meta,
-                        "alpn": ssock.selected_alpn_protocol(),
-                        "sni": sni
-                    }
+            reader, writer = await asyncio.wait_for(
+                asyncio.open_connection(ip, port, ssl=ctx, server_hostname=sni),
+                timeout=timeout
+            )
+            
+            ssl_obj = writer.get_extra_info("ssl_object")
+            cert = ssl_obj.getpeercert()
+            cert_bin = ssl_obj.getpeercert(binary_form=True)
+            meta = cert_meta(cert_bin, cert)
+            
+            writer.close()
+            await writer.wait_closed()
+            
+            return True, {
+                "cert": cert,
+                "meta": meta,
+                "alpn": ssl_obj.selected_alpn_protocol() or "",
+                "sni": sni
+            }
         except:
             continue
+    
     return False, None
+
+def tls_check(ip, port, timeout=3):
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(tls_check_async(ip, port, min(timeout, 1.5)))
+        loop.close()
+        return result
+    except:
+        return False, None
