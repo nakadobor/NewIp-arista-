@@ -19,6 +19,10 @@ def main():
 
     os.makedirs("output", exist_ok=True)
 
+    with open("global_best.txt", "w") as f:
+        for ip, port, score in result:
+            f.write(f"{ip}:{port}:{score}:{now + (7 * 24 * 3600)}\n")
+
     with open("output/global_best.txt", "w") as f:
         for ip, port, score in result:
             f.write(f"{ip}:{port}:{score}:{now + (7 * 24 * 3600)}\n")
