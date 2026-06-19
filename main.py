@@ -1,5 +1,6 @@
 import json
 import time
+import os
 from core.consensus import ConsensusTopK
 
 def main():
@@ -15,6 +16,8 @@ def main():
     result = result[:4000]
 
     now = time.time()
+
+    os.makedirs("output", exist_ok=True)
 
     with open("output/global_best.txt", "w") as f:
         for ip, port, score in result:
