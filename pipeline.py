@@ -2,6 +2,7 @@ import asyncio
 import os
 import random
 import sys
+import time
 
 from downloader import Downloader
 from exporter import Exporter
@@ -25,7 +26,10 @@ async def pipeline(cfg):
 
     shard_id = int(os.getenv("SHARD_ID", "0"))
 
-    print(f"[DEBUG] Starting shard {shard_id}")
+    print(f"[DEBUG] ===== STARTING SHARD {shard_id} =====")
+    print(f"[DEBUG] Timeout: {cfg['timeout']}s")
+    print(f"[DEBUG] Ports: {cfg['ports']}")
+    print(f"[DEBUG] SNI Hosts: {cfg['sni_hosts']}")
 
     ckpt = Checkpoint(shard_id, cfg["checkpoint_every"])
     cache = Cache()
@@ -47,10 +51,10 @@ async def pipeline(cfg):
     for url, ips in data.items():
         if ips:
             total_sources += 1
-            print(f"[DEBUG] Source {url}: {len(ips)} CIDRs")
+            print(f"[DEBUG] Source {url.split('/')[-1]}: {len(ips)} CIDRs")
             cidrs.extend(ips)
         else:
-            print(f"[WARN] Source {url}: EMPTY or failed")
+            print(f"[WARN] Source {url.split('/')[-1]}: EMPTY or failed")
 
     print(f"[DEBUG] Total CIDRs collected: {len(cidrs)} from {total_sources} sources")
 
@@ -60,10 +64,12 @@ async def pipeline(cfg):
 
     stream = CIDRStream(cidrs, cfg["sample_per_source"])
 
-    total_ips = 0
+    ip_count = 0
     for _ in stream.stream():
-        total_ips += 1
-    print(f"[DEBUG] Total IPs to test: {total_ips}")
+        ip_count += 1
+        if ip_count >= 100:
+            break
+    print(f"[DEBUG] Sample IP generation test: first 100 IPs generated successfully")
 
     stream = CIDRStream(cidrs, cfg["sample_per_source"])
 
@@ -77,13 +83,20 @@ async def pipeline(cfg):
     quality_total = 0
     quality_ok = 0
     workers = set()
+    processed_ips = 0
 
     async def producer():
+        nonlocal ip_count
         i = ckpt.load()
+        produced = 0
 
         for ip in stream.stream():
             i += 1
+            produced += 1
             metrics.inc("produced")
+
+            if produced % 1000 == 0:
+                print(f"[DEBUG] Produced {produced} IPs so far")
 
             if dedup.seen(ip):
                 continue
@@ -95,7 +108,6 @@ async def pipeline(cfg):
                 continue
 
             await back.wait()
-
             await q.put((i, ip))
 
             if i % cfg["checkpoint_every"] == 0:
@@ -104,17 +116,25 @@ async def pipeline(cfg):
             if cfg.get("random_delay_ms"):
                 await asyncio.sleep(random.uniform(0, cfg["random_delay_ms"] / 1000))
 
+        print(f"[DEBUG] Producer finished. Total produced: {produced}")
+
     async def worker():
-        nonlocal quality_total, quality_ok
+        nonlocal quality_total, quality_ok, processed_ips
 
         while True:
             i, ip = await q.get()
             try:
+                processed_ips += 1
                 metrics.inc("consumed")
+
+                if processed_ips % 100 == 0:
+                    print(f"[DEBUG] Processed {processed_ips} IPs, found {len(topk.heap)} valid")
 
                 tcp_res = await tcp.probe(ip, cfg["ports"])
 
                 if not tcp_res:
+                    if processed_ips % 500 == 0:
+                        print(f"[DEBUG] No TCP response from {ip}")
                     continue
 
                 tcp_res = sorted(tcp_res, key=lambda x: x[2])
@@ -127,6 +147,7 @@ async def pipeline(cfg):
                         if r:
                             quality_ok += 1
                             topk.push(r)
+                            print(f"[FOUND] {ip2}:{port} latency: {r[2]:.2f}ms")
                             found = True
                             break
                     if found:
@@ -162,9 +183,10 @@ async def pipeline(cfg):
 
     async def monitor():
         while True:
-            await asyncio.sleep(10)
+            await asyncio.sleep(5)
             print(f"[MONITOR] Queue: {q.qsize()}, Workers: {len(workers)}, "
-                  f"TopK: {len(topk.heap)}, Quality: {quality_ok}/{quality_total}")
+                  f"TopK: {len(topk.heap)}, Quality: {quality_ok}/{quality_total}, "
+                  f"Processed: {processed_ips}")
 
     prod = asyncio.create_task(producer())
     manager = asyncio.create_task(worker_manager())
@@ -184,9 +206,12 @@ async def pipeline(cfg):
     await asyncio.gather(*workers, return_exceptions=True)
     await asyncio.gather(manager, ckpt_task, monitor_task, return_exceptions=True)
 
-    Exporter.save(topk.items(), shard_id)
+    print(f"[RESULT] Final: Found {len(topk.heap)} IPs, Quality: {quality_ok}/{quality_total}")
+    
+    if len(topk.heap) == 0:
+        print("[ERROR] No valid IPs found! Creating empty file to debug.")
 
-    print(f"[RESULT] Found {len(topk.heap)} IPs, Quality: {quality_ok}/{quality_total}")
+    Exporter.save(topk.items(), shard_id)
 
     logger.info({
         "quality_score": quality_ok / max(1, quality_total),
