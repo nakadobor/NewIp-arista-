@@ -20,7 +20,7 @@ from domains import extract_domains
 from validator import validate_domains
 from ranker import rank_results
 
-from cache import optimize_stage_files
+from cache import optimize_stage_files, compact_cache_files
 
 OUTPUT_DIR = "output"
 
@@ -52,10 +52,10 @@ def exists(path):
 def should_update_bank():
     bank_file = "output/ip_bank.txt"
     clean_file = "output/clean_ips.txt"
-    
+
     if not exists(bank_file) or not exists(clean_file):
         return True
-    
+
     try:
         mtime = os.path.getmtime(bank_file)
         last_update = datetime.fromtimestamp(mtime)
@@ -71,6 +71,9 @@ def should_update_bank():
 
 def prepare():
     ensure_output()
+
+    print("COMPACTING CACHE FILES")
+    compact_cache_files()
 
     if should_update_bank():
         print("DOWNLOAD START")
