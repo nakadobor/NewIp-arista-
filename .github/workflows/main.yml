@@ -74,6 +74,10 @@ jobs:
             python cleaner.py
           fi
 
+      - name: Compact Cache
+        run: |
+          python -c "from cache import compact_cache_files; compact_cache_files()"
+
       - name: Save Rolling State
         uses: actions/upload-artifact@v4
         with:
