@@ -30,12 +30,14 @@ from cache import (
     already_scanned,
     cache_result,
     https_meta_store,
-    https_meta_get
+    https_meta_get,
+    compact_cache_files
 )
 
 from livebank import append_live
 
 RESULT_FILE = "output/results.txt"
+TCP_BATCH_WRITE_LIMIT = 100
 
 
 def ensure_output():
@@ -187,56 +189,41 @@ def tcp_check(
     )
 
 
-def tcp_worker(
-    ip,
-    ports,
-    retries,
-    cfg,
-    cache
-):
-    live = []
-
-    limit = cfg.get(
-        "latency_limit_ms",
-        500
+def tcp_check_port(ip, port, retries, cfg):
+    timeout = config_timeout(
+        cfg,
+        port
     )
 
-    for port in ports:
+    return tcp_check(
+        ip,
+        port,
+        retries,
+        timeout
+    )
 
-        if already_scanned(
-            cache,
-            ip,
-            port
-        ):
-            continue
 
-        timeout = config_timeout(
-            cfg,
-            port
-        )
+def tcp_worker_ports(ip, ports, retries, cfg, cache):
+    live = []
+    limit = cfg.get("latency_limit_ms", 500)
 
-        status, latency = tcp_check(
-            ip,
-            port,
-            retries,
-            timeout
-        )
+    with ThreadPoolExecutor(max_workers=len(ports)) as ex:
+        futures = {}
+        for port in ports:
+            if already_scanned(cache, ip, port):
+                continue
+            futures[ex.submit(tcp_check_port, ip, port, retries, cfg)] = port
 
-        cache_result(
-            cache,
-            ip,
-            port,
-            status
-        )
-
-        if (
-            status == "success"
-            and latency is not None
-            and latency <= limit
-        ):
-            live.append(
-                f"{ip}:{port}:{latency}"
-            )
+        for fut in futures:
+            port = futures[fut]
+            try:
+                status, latency = fut.result()
+                cache_result(cache, ip, port, status)
+                if status == "success" and latency is not None and latency <= limit:
+                    live.append(f"{ip}:{port}:{latency}")
+            except:
+                cache_result(cache, ip, port, "failed")
+                continue
 
     return live
 
@@ -272,6 +259,7 @@ def tcp_scan(
 
     total_live = 0
     total_batch = 0
+    stage_buffer = []
 
     for batch in read_batches(
         input_file,
@@ -313,7 +301,7 @@ def tcp_scan(
 
                     pending.add(
                         ex.submit(
-                            tcp_worker,
+                            tcp_worker_ports,
                             ip,
                             ports,
                             retries,
@@ -341,20 +329,17 @@ def tcp_scan(
                     except:
                         continue
 
-        append_tcp_live(
-            stage_live
-        )
+        if stage_live:
+            stage_buffer.extend(stage_live)
 
-        append_live(
-            stage_live
-        )
+            if len(stage_buffer) >= TCP_BATCH_WRITE_LIMIT:
+                append_tcp_live(stage_buffer)
+                append_live(stage_buffer)
+                total_live += len(stage_buffer)
+                stage_buffer = []
 
         save_cache(
             cache
-        )
-
-        total_live += len(
-            stage_live
         )
 
         print(
@@ -362,6 +347,12 @@ def tcp_scan(
             f"LIVE={len(stage_live)} "
             f"TOTAL={total_live}"
         )
+
+    if stage_buffer:
+        append_tcp_live(stage_buffer)
+        append_live(stage_buffer)
+        total_live += len(stage_buffer)
+        stage_buffer = []
 
     print(
         f"TCP COMPLETE={total_live}"
@@ -448,6 +439,7 @@ def tls_scan():
     )
 
     tls_live = []
+    buffer = []
 
     with ThreadPoolExecutor(
         max_workers=threads
@@ -458,9 +450,13 @@ def tls_scan():
             tcp_items
         ):
             if res:
-                tls_live.append(
-                    res
-                )
+                buffer.append(res)
+                if len(buffer) >= TCP_BATCH_WRITE_LIMIT:
+                    tls_live.extend(buffer)
+                    buffer = []
+
+    if buffer:
+        tls_live.extend(buffer)
 
     append_tls_live(
         tls_live
@@ -566,12 +562,13 @@ def https_scan():
         return
 
     https_live = []
+    buffer = []
 
     async def run_https_scan():
-        nonlocal https_live
-        
+        nonlocal https_live, buffer
+
         batch_size = 50
-        
+
         timeout_cfg = aiohttp.ClientTimeout(
             total=cfg.get("timeout", 3),
             connect=2,
@@ -590,10 +587,10 @@ def https_scan():
             connector=connector,
             timeout=timeout_cfg
         ) as session:
-            
+
             for i in range(0, len(tls_items), batch_size):
                 batch = tls_items[i:i + batch_size]
-                
+
                 tasks = [
                     https_worker_async(
                         item,
@@ -602,22 +599,27 @@ def https_scan():
                     )
                     for item in batch
                 ]
-                
+
                 results = await asyncio.gather(*tasks, return_exceptions=True)
-                
+
                 for res in results:
                     if res and not isinstance(res, Exception):
-                        https_live.append(res)
-                
+                        buffer.append(res)
+                        if len(buffer) >= TCP_BATCH_WRITE_LIMIT:
+                            https_live.extend(buffer)
+                            buffer = []
+
                 print(f"HTTPS PROGRESS: {min(i + batch_size, len(tls_items))}/{len(tls_items)}")
-    
+
     import aiohttp
-    
+
     try:
         asyncio.run(run_https_scan())
     except Exception as e:
         print(f"HTTPS SCAN ERROR: {e}")
-        https_live = []
+
+    if buffer:
+        https_live.extend(buffer)
 
     append_https_live(
         https_live
@@ -685,6 +687,7 @@ def fingerprint_scan():
     )
 
     fp_results = []
+    buffer = []
 
     with ThreadPoolExecutor(
         max_workers=threads
@@ -695,9 +698,13 @@ def fingerprint_scan():
             https_items
         ):
             if res:
-                fp_results.append(
-                    res
-                )
+                buffer.append(res)
+                if len(buffer) >= TCP_BATCH_WRITE_LIMIT:
+                    fp_results.extend(buffer)
+                    buffer = []
+
+    if buffer:
+        fp_results.extend(buffer)
 
     append_fp(
         fp_results
@@ -775,23 +782,58 @@ def geo_scan():
 
     geo_cache = load_geo_cache()
     final = []
+    buffer = []
+    all_cached = True
 
-    with ThreadPoolExecutor(
-        max_workers=threads
-    ) as ex:
+    for item in fp_items:
+        try:
+            parts = item.split("|")
+            ip = parts[0]
+            if ip not in geo_cache:
+                all_cached = False
+                break
+        except:
+            continue
 
-        for res in ex.map(
-            lambda x:
-            geo_worker(
-                x,
-                geo_cache
-            ),
-            fp_items
-        ):
-            if res:
+    if all_cached and fp_items:
+        print("ALL IPS CACHED - SKIPPING GEO API")
+        for item in fp_items:
+            try:
+                parts = item.split("|")
+                ip = parts[0]
+                geo = geo_cache.get(ip, {})
+                country = geo.get("country", "?")
+                provider = geo.get("provider", "?")
                 final.append(
-                    res
+                    f"{parts[0]}|{parts[1]}|"
+                    f"{parts[2]}|{parts[3]}|"
+                    f"{parts[4]}|{parts[5]}|"
+                    f"{parts[6]}|{parts[7]}|"
+                    f"{country}|{provider}"
                 )
+            except:
+                continue
+    else:
+        with ThreadPoolExecutor(
+            max_workers=threads
+        ) as ex:
+
+            for res in ex.map(
+                lambda x:
+                geo_worker(
+                    x,
+                    geo_cache
+                ),
+                fp_items
+            ):
+                if res:
+                    buffer.append(res)
+                    if len(buffer) >= TCP_BATCH_WRITE_LIMIT:
+                        final.extend(buffer)
+                        buffer = []
+
+        if buffer:
+            final.extend(buffer)
 
     save_geo_cache(
         geo_cache
