@@ -3,6 +3,7 @@ about.gitlab.com
 api.w.org
 app.element.io
 assets.plesk.com
+avaneed.com
 bios.name
 bugs.launchpad.net
 cloud.ohanaa.net
@@ -39,14 +40,16 @@ mail.icdco.ir
 mail.iserver24.com
 mail.klevers-aryana.com
 mail.medilinkltd.com
+mail.niksardpouya.com
+mail.niktak.com
 mail.uniq24.com
 mail.unv.ir
 neon.dev
 ogp.me
 oss.maxcdn.com
 performance.now
+php.avaneed.com
 plesk.com
-portal.eastcool.com
 rankmath.com
 react.dev
 s.w.org
@@ -77,6 +80,7 @@ www.recaptcha.net
 www.softether-download.com
 www.softether.org
 www.sorooshan.com
+www.soroshan.eastcool.com
 www.templatemo.com
 www.w3.org
 xforwoocommerce.com

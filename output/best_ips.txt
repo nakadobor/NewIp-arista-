@@ -36,7 +36,7 @@
 46.209.127.234:8443 S=11 200ms TTFB=752 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Respina Networks Beyond Pjsc
 46.209.127.229:8443 S=11 200ms TTFB=751 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Respina Networks Beyond Pjsc
 46.209.127.228:8443 S=11 200ms TTFB=745 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Respina Networks Beyond Pjsc
-46.209.127.231:8443 S=11 200ms TTFB=1181 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Respina Networks Beyond Pjsc
+46.209.127.231:8443 S=11 200ms TTFB=1179 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Respina Networks Beyond Pjsc
 46.209.127.236:8443 S=11 200ms TTFB=743 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Respina Networks Beyond Pjsc
 91.186.193.92:2083 S=11 200ms TTFB=763 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Ettelaat Fanavarn e Tookan Co LTD
 91.186.193.92:2087 S=11 200ms TTFB=773 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Ettelaat Fanavarn e Tookan Co LTD
@@ -57,6 +57,8 @@
 213.176.6.19:443 S=11 200ms TTFB=1039 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Ettelaat Fanavarn e Tookan Co LTD
 213.176.6.86:443 S=11 200ms TTFB=1058 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Ettelaat Fanavarn e Tookan Co LTD
 213.176.6.82:443 S=11 200ms TTFB=712 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Ettelaat Fanavarn e Tookan Co LTD
+46.209.127.233:8443 S=11 200ms TTFB=1150 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Respina Networks Beyond Pjsc
+46.209.127.230:8443 S=11 200ms TTFB=1198 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Respina Networks Beyond Pjsc
 46.209.121.210:443 S=11 301ms TTFB=692 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Respina
 193.111.236.212:443 S=11 302ms TTFB=545 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Ettelaat Fanavarn e Tookan Co LTD
 185.84.158.149:2096 S=11 403ms TTFB=511 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= None None
@@ -70,9 +72,7 @@
 193.111.236.233:2096 S=11 404ms TTFB=504 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Ettelaat Fanavarn e Tookan Co LTD
 193.111.236.243:2096 S=11 404ms TTFB=518 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Ettelaat Fanavarn e Tookan Co LTD
 46.209.149.244:443 S=10 200ms TTFB=1747 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran CWM
-46.209.127.233:8443 S=10 200ms TTFB=1211 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Respina Networks Beyond Pjsc
-46.209.127.230:8443 S=10 200ms TTFB=1361 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Respina Networks Beyond Pjsc
-91.186.193.195:443 S=10 301ms TTFB=1001 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Ettelaat Fanavarn e Tookan Co LTD
+91.186.193.195:443 S=10 301ms TTFB=993 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Ettelaat Fanavarn e Tookan Co LTD
 193.111.236.221:443 S=10 301ms TTFB=898 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= Iran Ettelaat Fanavarn e Tookan Co LTD
 193.111.236.220:443 S=10 301ms TTFB=1180 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= None None
 193.111.236.141:443 S=10 301ms TTFB=710 PROTO=http/1.1 REL=1.0 CDN=unknown ALPN= None None
