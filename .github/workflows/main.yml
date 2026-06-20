@@ -78,13 +78,16 @@ jobs:
         run: |
           python -c "from cache import compact_cache_files; compact_cache_files()"
 
+      - name: Cleanup Before Save
+        run: python cleanup.py
+
       - name: Save Rolling State
         uses: actions/upload-artifact@v4
         with:
           name: arista-output
           path: output
           overwrite: true
-          retention-days: 3
+          retention-days: 1
 
   tcp:
     needs: prepare
@@ -111,13 +114,16 @@ jobs:
       - name: TCP Scan
         run: python main.py --tcp
 
+      - name: Cleanup After Scan
+        run: python cleanup.py
+
       - name: Save State
         uses: actions/upload-artifact@v4
         with:
           name: arista-output
           path: output
           overwrite: true
-          retention-days: 3
+          retention-days: 1
 
   tls:
     needs: tcp
@@ -144,13 +150,16 @@ jobs:
       - name: TLS Scan
         run: python main.py --tls
 
+      - name: Cleanup After Scan
+        run: python cleanup.py
+
       - name: Save State
         uses: actions/upload-artifact@v4
         with:
           name: arista-output
           path: output
           overwrite: true
-          retention-days: 3
+          retention-days: 1
 
   https:
     needs: tls
@@ -177,13 +186,16 @@ jobs:
       - name: HTTPS Validation
         run: python main.py --https
 
+      - name: Cleanup After Scan
+        run: python cleanup.py
+
       - name: Save State
         uses: actions/upload-artifact@v4
         with:
           name: arista-output
           path: output
           overwrite: true
-          retention-days: 3
+          retention-days: 1
 
   fingerprint:
     needs: https
@@ -210,13 +222,16 @@ jobs:
       - name: Fingerprint
         run: python main.py --fp
 
+      - name: Cleanup After Scan
+        run: python cleanup.py
+
       - name: Save State
         uses: actions/upload-artifact@v4
         with:
           name: arista-output
           path: output
           overwrite: true
-          retention-days: 3
+          retention-days: 1
 
   geo:
     needs: fingerprint
@@ -243,13 +258,16 @@ jobs:
       - name: GEO
         run: python main.py --geo
 
+      - name: Cleanup After Scan
+        run: python cleanup.py
+
       - name: Save State
         uses: actions/upload-artifact@v4
         with:
           name: arista-output
           path: output
           overwrite: true
-          retention-days: 3
+          retention-days: 1
 
   finalize:
     needs: geo
@@ -276,13 +294,16 @@ jobs:
       - name: Finalize
         run: python main.py --finalize
 
+      - name: Cleanup After Scan
+        run: python cleanup.py
+
       - name: Save Final State
         uses: actions/upload-artifact@v4
         with:
           name: arista-output
           path: output
           overwrite: true
-          retention-days: 3
+          retention-days: 1
 
       - name: Commit Final Output
         run: |
