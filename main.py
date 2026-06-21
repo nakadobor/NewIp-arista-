@@ -57,15 +57,22 @@ def prepare():
     ensure_output()
 
     print("COMPACTING CACHE FILES")
-    compact_cache_files()
+    try:
+        compact_cache_files()
+        print("✅ CACHE COMPACTED SUCCESSFULLY")
+    except Exception as e:
+        print(f"⚠️ Warning during cache compaction (Skipped): {e}")
 
     if should_update_bank():
         print("DOWNLOAD START")
-        download_sources()
-        print("CLEAN START")
-        clean_ips()
-        reset_cursor()
-        print("BANK UPDATED - CURSOR RESET")
+        try:
+            download_sources()
+            print("CLEAN START")
+            clean_ips()
+            reset_cursor()
+            print("BANK UPDATED - CURSOR RESET")
+        except Exception as e:
+            print(f"⚠️ Warning during bank update (Skipped): {e}")
 
 
 def run_tcp():
