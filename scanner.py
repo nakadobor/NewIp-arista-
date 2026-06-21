@@ -506,20 +506,17 @@ async def https_worker_async(
     if not ok:
         return None
 
-    https_meta_store(
-        ip,
-        port,
-        {
-            "headers": data.get(
-                "headers",
-                {}
-            ),
-            "ws": data.get(
-                "ws",
-                False
-            )
-        }
-    )
+    headers = data.get("headers", {})
+    
+    if headers:
+        https_meta_store(
+            ip,
+            port,
+            {
+                "headers": headers,
+                "ws": data.get("ws", False)
+            }
+        )
 
     ws = int(
         bool(
@@ -657,9 +654,10 @@ def fp_worker(
         {}
     )
 
-    cdn = detect_cdn(
-        headers
-    )
+    if not headers:
+        cdn = detect_cdn(ip, port)
+    else:
+        cdn = detect_cdn(headers=headers)
 
     return (
         f"{ip}|{port}|"
