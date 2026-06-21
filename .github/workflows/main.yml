@@ -22,6 +22,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   PYTHONUNBUFFERED: 1
 
@@ -66,27 +67,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 🟢 بررسی وجود آرتیفکت برای جلوگیری از کراش اکشن
-      - name: Check if Artifact Exists
-        id: check_artifact
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const artifacts = await github.rest.actions.listArtifactsForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-            const match = artifacts.data.artifacts.find(a => a.name === "arista-output" && !a.expired);
-            core.setOutput("exists", match ? "true" : "false");
-
-      - name: Restore Rolling State
-        if: steps.check_artifact.outputs.exists == 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: arista-output
-          path: output
-        continue-on-error: true
-
       - name: Ensure Output Directory Exists
         run: |
           mkdir -p output
@@ -109,14 +89,6 @@ jobs:
         run: |
           if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
 
-      - name: Save Rolling State
-        uses: actions/upload-artifact@v4
-        with:
-          name: arista-output
-          path: output
-          overwrite: true
-          retention-days: 1
-
   tcp:
     needs: prepare
     runs-on: ubuntu-latest
@@ -132,27 +104,12 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      - name: Restore State
-        uses: actions/download-artifact@v4
-        with:
-          name: arista-output
-          path: output
-        continue-on-error: true
-
       - name: TCP Scan
         run: python main.py --tcp
 
       - name: Cleanup After Scan
         run: |
           if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
-
-      - name: Save State
-        uses: actions/upload-artifact@v4
-        with:
-          name: arista-output
-          path: output
-          overwrite: true
-          retention-days: 1
 
   tls:
     needs: tcp
@@ -169,27 +126,12 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      - name: Restore State
-        uses: actions/download-artifact@v4
-        with:
-          name: arista-output
-          path: output
-        continue-on-error: true
-
       - name: TLS Scan
         run: python main.py --tls
 
       - name: Cleanup After Scan
         run: |
           if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
-
-      - name: Save State
-        uses: actions/upload-artifact@v4
-        with:
-          name: arista-output
-          path: output
-          overwrite: true
-          retention-days: 1
 
   https:
     needs: tls
@@ -206,27 +148,12 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      - name: Restore State
-        uses: actions/download-artifact@v4
-        with:
-          name: arista-output
-          path: output
-        continue-on-error: true
-
       - name: HTTPS Validation
         run: python main.py --https
 
       - name: Cleanup After Scan
         run: |
           if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
-
-      - name: Save State
-        uses: actions/upload-artifact@v4
-        with:
-          name: arista-output
-          path: output
-          overwrite: true
-          retention-days: 1
 
   fingerprint:
     needs: https
@@ -243,27 +170,12 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      - name: Restore State
-        uses: actions/download-artifact@v4
-        with:
-          name: arista-output
-          path: output
-        continue-on-error: true
-
       - name: Fingerprint
         run: python main.py --fp
 
       - name: Cleanup After Scan
         run: |
           if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
-
-      - name: Save State
-        uses: actions/upload-artifact@v4
-        with:
-          name: arista-output
-          path: output
-          overwrite: true
-          retention-days: 1
 
   geo:
     needs: fingerprint
@@ -280,27 +192,12 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      - name: Restore State
-        uses: actions/download-artifact@v4
-        with:
-          name: arista-output
-          path: output
-        continue-on-error: true
-
       - name: GEO
         run: python main.py --geo
 
       - name: Cleanup After Scan
         run: |
           if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
-
-      - name: Save State
-        uses: actions/upload-artifact@v4
-        with:
-          name: arista-output
-          path: output
-          overwrite: true
-          retention-days: 1
 
   finalize:
     needs: geo
@@ -317,13 +214,6 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      - name: Restore State
-        uses: actions/download-artifact@v4
-        with:
-          name: arista-output
-          path: output
-        continue-on-error: true
-
       - name: Finalize
         run: python main.py --finalize
 
@@ -337,14 +227,6 @@ jobs:
       - name: Cleanup After Scan
         run: |
           if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
-
-      - name: Save Final State
-        uses: actions/upload-artifact@v4
-        with:
-          name: arista-output
-          path: output
-          overwrite: true
-          retention-days: 1
 
       - name: Commit Final Output
         run: |
