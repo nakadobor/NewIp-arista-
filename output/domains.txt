@@ -28,6 +28,7 @@ httpd.apache.org
 idnplay.xyz
 kb.marcopacs.com
 launchpad.net
+limaservice.ir
 linux.unv.ir
 linux1.iserver24.com
 linux2.iserver24.com
@@ -39,9 +40,9 @@ mail.hamta-gp.com
 mail.icdco.ir
 mail.iserver24.com
 mail.klevers-aryana.com
+mail.medilinkltd.com
 mail.nikarta.com
 mail.niksardpouya.com
-mail.niktak.com
 mail.uniq24.com
 mail.unv.ir
 neon.dev
@@ -54,11 +55,8 @@ portal.eastcool.com
 rankmath.com
 react.dev
 s.w.org
-schema.org
-sentry.io
 server.kplusi.org
 soft98.ir
-soroshan.eastcool.com
 support.plesk.com
 t.constructor.name
 t.me
