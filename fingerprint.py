@@ -112,9 +112,7 @@ def detect_cdn_from_headers(headers):
 
 def detect_cdn(ip=None, port=None, headers=None):
     if headers is not None:
-        detected = detect_cdn_from_headers(headers)
-        if detected != "unknown":
-            return detected
+        return detect_cdn_from_headers(headers)
 
     if ip is None or port is None:
         return "unknown"
@@ -133,9 +131,7 @@ def detect_cdn(ip=None, port=None, headers=None):
             allow_redirects=True
         )
 
-        detected = detect_cdn_from_headers(r.headers)
-        if detected != "unknown":
-            return detected
+        return detect_cdn_from_headers(r.headers)
 
     except:
         pass
