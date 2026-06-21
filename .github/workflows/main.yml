@@ -2,6 +2,15 @@ name: ARISTA MATRIX PIPELINE
 
 on:
   workflow_dispatch:
+    inputs:
+      CUSTOM_CAPTION:
+        description: 'Custom Caption for Telegram'
+        required: false
+        default: ''
+      IP_COUNT_LIMIT:
+        description: 'Max IP Count'
+        required: false
+        default: '1000'
   schedule:
     - cron: "0 */3 * * *"
 
@@ -294,12 +303,12 @@ jobs:
       - name: Finalize
         run: python main.py --finalize
 
-      # 🤖 اجرای اسکریپت تلگرام شما بلافاصله پس از فینالایز شدن خروجی‌ها
+      # 🤖 اجرای اسکریپت تلگرام شما با سیستم جدید ورودی‌ها
       - name: Run Telegram Bot Clean & Send
         continue-on-error: true
         env:
-          CUSTOM_CAPTION: ${{ vars.CUSTOM_CAPTION }}
-          IP_COUNT_LIMIT: ${{ vars.IP_COUNT_LIMIT }}
+          CUSTOM_CAPTION: ${{ github.event.inputs.CUSTOM_CAPTION || vars.CUSTOM_CAPTION }}
+          IP_COUNT_LIMIT: ${{ github.event.inputs.IP_COUNT_LIMIT || vars.IP_COUNT_LIMIT }}
         run: python send_to_telegram.py
 
       - name: Cleanup After Scan
