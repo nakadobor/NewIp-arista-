@@ -189,45 +189,44 @@ def run_geo():
 def run_finalize():
     prepare()
 
-    if not exists(
-        "output/results.txt"
-    ):
-        print(
-            "NO RESULTS"
-        )
+    # اول چک می‌کنیم فایل خروجی مرحله GEO وجود دارد یا خیر
+    if not exists("output/results.txt"):
+        print("NO RESULTS")
         return
 
-    print(
-        "OPTIMIZE CACHE"
-    )
-
+    print("OPTIMIZE CACHE")
     optimize_stage_files()
 
-    if exists(
-        "output/tls_live.txt"
-    ):
-        print(
-            "DOMAIN EXTRACT"
-        )
+    if exists("output/tls_live.txt"):
+        print("DOMAIN EXTRACT")
         extract_domains()
 
-    if exists(
-        "output/domains_raw.txt"
-    ):
-        print(
-            "DOMAIN VALIDATE"
-        )
+    if exists("output/domains_raw.txt"):
+        print("DOMAIN VALIDATE")
         validate_domains()
 
-    print(
-        "RANK START"
-    )
+    print("RANK START")
+    try:
+        rank_results()
+    except Exception as e:
+        print(f"Ranker encountered an issue: {e}")
 
-    rank_results()
+    # 🟢 چتر نجات دقیقاً در ایستگاه پایانی:
+    # اگر رنکر فایل را نساخت یا خالیش کرد، ما از روی نتایج تایید شده، خودمان فایل را احیا می‌کنیم.
+    if not exists("output/best_ips.txt") or os.path.getsize("output/best_ips.txt") == 0:
+        print("⚠️ best_ips.txt was missing or empty! Restoring from verified results...")
+        try:
+            with open("output/results.txt", "r", encoding="utf-8") as rf:
+                ips = rf.read()
+            with open("output/best_ips.txt", "w", encoding="utf-8") as bf:
+                bf.write(ips)
+            print("✅ FORCE CREATED BEST_IPS.TXT FROM RESULTS")
+        except Exception as e:
+            print(f"Error restoring results: {e}")
+    else:
+        print("✅ best_ips.txt generated successfully by ranker.")
 
-    print(
-        "FINAL DONE"
-    )
+    print("FINAL DONE")
 
 
 def main():
