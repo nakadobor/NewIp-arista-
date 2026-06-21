@@ -27,8 +27,8 @@
     "threads": 300,
     "batch_size": 60000,
     "retries": 2,
-    "timeout": 3,
-    "latency_limit_ms": 500,
+    "timeout": 5,
+    "latency_limit_ms": 1200,
     "matrix_parts": 4,
     "sni_hosts": [
         "cloudflare.com",
