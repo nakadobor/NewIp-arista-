@@ -9,7 +9,6 @@ bugs.launchpad.net
 cloud.ohanaa.net
 cmailedge.halyco.net
 commons-pages.search.show
-crm.eastcool.com
 date.now
 docs.marcopacs.com
 exchange.koa.ir
@@ -22,12 +21,9 @@ git.doclast.com
 github.com
 gmpg.org
 grafana.com
-grafana.kifabzar.com
 host.didgah.cloud
 httpd.apache.org
 idnplay.xyz
-kb.marcopacs.com
-launchpad.net
 linux.unv.ir
 linux1.iserver24.com
 linux2.iserver24.com
@@ -39,8 +35,8 @@ mail.hamta-gp.com
 mail.icdco.ir
 mail.iserver24.com
 mail.klevers-aryana.com
+mail.medilinkltd.com
 mail.nikarta.com
-mail.niksardpouya.com
 mail.niktak.com
 mail.uniq24.com
 mail.unv.ir
@@ -55,9 +51,9 @@ rankmath.com
 react.dev
 s.w.org
 schema.org
-sentry.io
 server.kplusi.org
 soft98.ir
+soroshan.eastcool.com
 support.plesk.com
 t.constructor.name
 t.me
@@ -65,7 +61,6 @@ talk.plesk.com
 text.style.top
 this.media
 twitter.com
-win1.iserver24.net
 www.2ba.re
 www.facebook.com
 www.google.com
@@ -73,13 +68,12 @@ www.gstatic.com
 www.ilashop.ir
 www.issabel.org
 www.linkedin.com
-www.marcopacs.com
 www.opensource.org
 www.plesk.com
-www.recaptcha.net
 www.softether-download.com
 www.softether.org
 www.sorooshan.com
+www.soroshan.eastcool.com
 www.templatemo.com
 www.w3.org
 xforwoocommerce.com
