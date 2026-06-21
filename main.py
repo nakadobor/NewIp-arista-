@@ -21,7 +21,6 @@ from validator import validate_domains
 from ranker import rank_results
 
 from cache import optimize_stage_files, compact_cache_files
-from state_manager import compact_artifact, artifact_info
 
 OUTPUT_DIR = "output"
 
@@ -51,33 +50,11 @@ def exists(path):
 
 
 def should_update_bank():
-    bank_file = "output/ip_bank.txt"
-    clean_file = "output/clean_ips.txt"
-
-    if not exists(bank_file) or not exists(clean_file):
-        return True
-
-    try:
-        mtime = os.path.getmtime(bank_file)
-        last_update = datetime.fromtimestamp(mtime)
-        age = datetime.now() - last_update
-        if age > timedelta(hours=24):
-            print(f"BANK AGE: {age.total_seconds()/3600:.1f} HOURS - UPDATING")
-            return True
-        print(f"BANK AGE: {age.total_seconds()/3600:.1f} HOURS - FRESH")
-        return False
-    except:
-        return True
+    return True
 
 
 def prepare():
     ensure_output()
-
-    print("COMPACTING ARTIFACT...")
-    stats = compact_artifact()
-    info = artifact_info()
-    print(f"ARTIFACT SIZE: {info['total_size_mb']} MB")
-    print(f"NEW IPS: {stats['live_bank_new_ips']}")
 
     print("COMPACTING CACHE FILES")
     compact_cache_files()
