@@ -88,7 +88,8 @@ jobs:
           python -c "from cache import compact_cache_files; compact_cache_files()"
 
       - name: Cleanup Before Save
-        run: python cleanup.py
+        run: |
+          if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
 
       - name: Save Rolling State
         uses: actions/upload-artifact@v4
@@ -124,7 +125,8 @@ jobs:
         run: python main.py --tcp
 
       - name: Cleanup After Scan
-        run: python cleanup.py
+        run: |
+          if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
 
       - name: Save State
         uses: actions/upload-artifact@v4
@@ -160,7 +162,8 @@ jobs:
         run: python main.py --tls
 
       - name: Cleanup After Scan
-        run: python cleanup.py
+        run: |
+          if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
 
       - name: Save State
         uses: actions/upload-artifact@v4
@@ -196,7 +199,8 @@ jobs:
         run: python main.py --https
 
       - name: Cleanup After Scan
-        run: python cleanup.py
+        run: |
+          if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
 
       - name: Save State
         uses: actions/upload-artifact@v4
@@ -232,7 +236,8 @@ jobs:
         run: python main.py --fp
 
       - name: Cleanup After Scan
-        run: python cleanup.py
+        run: |
+          if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
 
       - name: Save State
         uses: actions/upload-artifact@v4
@@ -268,7 +273,8 @@ jobs:
         run: python main.py --geo
 
       - name: Cleanup After Scan
-        run: python cleanup.py
+        run: |
+          if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
 
       - name: Save State
         uses: actions/upload-artifact@v4
@@ -312,7 +318,8 @@ jobs:
         run: python send_to_telegram.py
 
       - name: Cleanup After Scan
-        run: python cleanup.py
+        run: |
+          if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
 
       - name: Save Final State
         uses: actions/upload-artifact@v4
