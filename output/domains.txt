@@ -7,7 +7,6 @@ api.w.org
 app.element.io
 assets.plesk.com
 avaneed.com
-b.pro
 bios.name
 bugs.launchpad.net
 cloud-tia-bridge-shv-02-ccu1.facebook.com
@@ -133,7 +132,7 @@ mail.eastcool.com
 mail.hamta-gp.com
 mail.icdco.ir
 mail.iserver24.com
-mail.klevers-aryana.com
+mail.medilinkltd.com
 mail.nikarta.com
 mail.niksardpouya.com
 mail.niktak.com
@@ -155,6 +154,8 @@ performance.now
 php.avaneed.com
 plesk.com
 po111.asw02.gru1.tfbnw.net
+po121.asw01.gru1.tfbnw.net
+po121.asw01.sjc1.tfbnw.net
 po131.asw01.gru1.tfbnw.net
 po131.asw02.gru1.tfbnw.net
 po141.asw01.gru1.tfbnw.net
@@ -168,6 +169,7 @@ secure-edge-latest-shv-01-lga3.facebook.com
 sentry.io
 server.kplusi.org
 soft98.ir
+soroshan.eastcool.com
 static.facebook.com
 support.plesk.com
 synthetic-e2e-elbintern-sli-shv-01-vie1.facebook.com
