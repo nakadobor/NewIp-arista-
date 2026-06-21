@@ -252,6 +252,12 @@ def run_finalize():
     rank_results()
 
     print(
+        "CLEANING STAGE FILES"
+    )
+
+    reset_stage_files()
+
+    print(
         "FINAL DONE"
     )
 
