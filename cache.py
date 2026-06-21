@@ -41,6 +41,7 @@ def load_cache():
         return {}
 
     data = {}
+    count = 0
 
     try:
         with open(
@@ -77,12 +78,17 @@ def load_cache():
                     else "success"
                 )
 
-                data[
-                    cache_key(
-                        ip,
-                        port
-                    )
-                ] = status
+                if status != "failed":
+                    data[
+                        cache_key(
+                            ip,
+                            port
+                        )
+                    ] = status
+                    count += 1
+
+                if count > 500000:
+                    break
 
     except:
         return {}
@@ -92,6 +98,10 @@ def load_cache():
 
 def save_cache(cache):
     ensure_output()
+
+    if len(cache) > 500000:
+        cache = {k: v for k, v in cache.items() if v != "failed"}
+        cache = dict(list(cache.items())[:500000])
 
     tmp = (
         CACHE_FILE
@@ -156,12 +166,14 @@ def cache_result(
     port,
     status="success"
 ):
-    cache[
-        cache_key(
-            ip,
-            port
-        )
-    ] = status
+
+    if status != "failed":
+        cache[
+            cache_key(
+                ip,
+                port
+            )
+        ] = status
 
 
 def cache_count():
@@ -253,6 +265,21 @@ def dedupe_file(path):
     ):
         return 0
 
+    file_size = os.path.getsize(path) if os.path.exists(path) else 0
+    max_size = 10 * 1024 * 1024 
+    
+    if file_size > max_size:
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+                if len(lines) > 50000:
+                    lines = lines[-50000:]
+            
+            with open(path, "w", encoding="utf-8") as f:
+                f.writelines(lines)
+        except:
+            pass
+
     tmp = (
         path
         + ".tmp"
@@ -260,6 +287,7 @@ def dedupe_file(path):
 
     try:
         seen = set()
+        count = 0
 
         with open(
             path,
@@ -289,15 +317,14 @@ def dedupe_file(path):
                     line
                     + "\n"
                 )
+                count += 1
 
         os.replace(
             tmp,
             path
         )
 
-        return len(
-            seen
-        )
+        return count
 
     except:
         return 0
@@ -394,15 +421,19 @@ def load_geo_cache():
             "r",
             encoding="utf-8"
         ) as f:
-            return json.load(
-                f
-            )
+            data = json.load(f)
+            if len(data) > 50000:
+                data = dict(list(data.items())[-50000:])
+            return data
     except:
         return {}
 
 
 def save_geo_cache(data):
     ensure_output()
+
+    if len(data) > 50000:
+        data = dict(list(data.items())[-50000:])
 
     tmp = (
         GEO_FILE
@@ -445,17 +476,19 @@ def load_https_meta():
             "r",
             encoding="utf-8"
         ) as f:
-
-            return json.load(
-                f
-            )
-
+            data = json.load(f)
+            if len(data) > 50000:
+                data = dict(list(data.items())[-50000:])
+            return data
     except:
         return {}
 
 
 def save_https_meta(data):
     ensure_output()
+
+    if len(data) > 50000:
+        data = dict(list(data.items())[-50000:])
 
     tmp = (
         HTTPS_META_FILE
@@ -540,6 +573,17 @@ def geo_store(
 
 def compact_cache_files():
     ensure_output()
+
+    temp_files = ["output/ip_bank.txt", "output/clean_ips.txt", 
+                  "output/current_part.txt", "output/results.txt",
+                  "output/domains_raw.txt"]
+    
+    for f in temp_files:
+        if os.path.exists(f):
+            try:
+                os.remove(f)
+            except:
+                pass
 
     cache = load_cache()
 
