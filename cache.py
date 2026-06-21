@@ -8,7 +8,6 @@ HTTPS_FILE = "output/https_live.txt"
 FP_FILE = "output/fingerprint_results.txt"
 GEO_FILE = "output/geo_cache.json"
 HTTPS_META_FILE = "output/https_meta.json"
-BEST_IPS_FILE = "output/best_ips.txt"
 
 
 def ensure_output():
@@ -563,62 +562,6 @@ def compact_cache_files():
         "cache": len(load_cache()),
         "geo": len(load_geo_cache())
     }
-
-
-def clear_all_caches():
-    ensure_output()
-    
-    files_to_clear = [
-        CACHE_FILE,
-        TCP_FILE,
-        TLS_FILE,
-        HTTPS_FILE,
-        FP_FILE,
-        GEO_FILE,
-        HTTPS_META_FILE
-    ]
-    
-    for file_path in files_to_clear:
-        if os.path.exists(file_path):
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write("")
-
-
-def preserve_best_ips():
-    ensure_output()
-    
-    if not os.path.exists(BEST_IPS_FILE):
-        return
-    
-    try:
-        with open(BEST_IPS_FILE, "r", encoding="utf-8") as f:
-            content = f.read()
-        
-        return content
-    except:
-        return None
-
-
-def restore_best_ips(content):
-    ensure_output()
-    
-    if content is None:
-        return
-    
-    try:
-        with open(BEST_IPS_FILE, "w", encoding="utf-8") as f:
-            f.write(content)
-    except:
-        pass
-
-
-def reset_for_new_scan():
-    best_content = preserve_best_ips()
-    
-    clear_all_caches()
-    
-    if best_content is not None:
-        restore_best_ips(best_content)
 
 
 if __name__ == "__main__":
