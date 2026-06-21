@@ -1,3 +1,5 @@
+import os
+
 RESULT_FILE = "output/results.txt"
 HTTPS_FILE = "output/https_live.txt"
 BEST_FILE = "output/best_ips.txt"
