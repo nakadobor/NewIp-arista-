@@ -57,45 +57,37 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Restore Permanent State
+      - name: Restore Rolling State
         uses: actions/download-artifact@v4
         with:
-          name: arista-permanent
+          name: arista-output
           path: output
         continue-on-error: true
-
-      - name: Clean Temp Files
-        run: |
-          mkdir -p output
-          rm -f output/ip_bank.txt output/clean_ips.txt output/current_part.txt output/scanned_cache.txt
-          rm -f output/results.txt output/domains.txt output/domains_raw.txt 2>/dev/null || true
 
       - name: Prepare Bank
         run: |
           mkdir -p output
-          python downloader.py
-          python cleaner.py
+          if [ ! -s output/ip_bank.txt ]; then
+            python downloader.py
+          fi
+          if [ ! -s output/clean_ips.txt ]; then
+            python cleaner.py
+          fi
 
       - name: Compact Cache
         run: |
           python -c "from cache import compact_cache_files; compact_cache_files()"
 
-      - name: Save Permanent State (No Temp Files)
+      - name: Cleanup Before Save
+        run: python cleanup.py
+
+      - name: Save Rolling State
         uses: actions/upload-artifact@v4
         with:
-          name: arista-permanent
-          path: |
-            output/best_ips.txt
-            output/live_bank.txt
-            output/tcp_live.txt
-            output/tls_live.txt
-            output/https_live.txt
-            output/fingerprint_results.txt
-            output/geo_cache.json
-            output/scan_cursor.txt
-            output/https_meta.json
+          name: arista-output
+          path: output
           overwrite: true
-          retention-days: 3
+          retention-days: 1
 
   tcp:
     needs: prepare
@@ -112,32 +104,26 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      - name: Restore Permanent State
+      - name: Restore State
         uses: actions/download-artifact@v4
         with:
-          name: arista-permanent
+          name: arista-output
           path: output
         continue-on-error: true
 
       - name: TCP Scan
         run: python main.py --tcp
 
-      - name: Save Permanent State
+      - name: Cleanup After Scan
+        run: python cleanup.py
+
+      - name: Save State
         uses: actions/upload-artifact@v4
         with:
-          name: arista-permanent
-          path: |
-            output/best_ips.txt
-            output/live_bank.txt
-            output/tcp_live.txt
-            output/tls_live.txt
-            output/https_live.txt
-            output/fingerprint_results.txt
-            output/geo_cache.json
-            output/scan_cursor.txt
-            output/https_meta.json
+          name: arista-output
+          path: output
           overwrite: true
-          retention-days: 3
+          retention-days: 1
 
   tls:
     needs: tcp
@@ -154,32 +140,26 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      - name: Restore Permanent State
+      - name: Restore State
         uses: actions/download-artifact@v4
         with:
-          name: arista-permanent
+          name: arista-output
           path: output
         continue-on-error: true
 
       - name: TLS Scan
         run: python main.py --tls
 
-      - name: Save Permanent State
+      - name: Cleanup After Scan
+        run: python cleanup.py
+
+      - name: Save State
         uses: actions/upload-artifact@v4
         with:
-          name: arista-permanent
-          path: |
-            output/best_ips.txt
-            output/live_bank.txt
-            output/tcp_live.txt
-            output/tls_live.txt
-            output/https_live.txt
-            output/fingerprint_results.txt
-            output/geo_cache.json
-            output/scan_cursor.txt
-            output/https_meta.json
+          name: arista-output
+          path: output
           overwrite: true
-          retention-days: 3
+          retention-days: 1
 
   https:
     needs: tls
@@ -196,32 +176,26 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      - name: Restore Permanent State
+      - name: Restore State
         uses: actions/download-artifact@v4
         with:
-          name: arista-permanent
+          name: arista-output
           path: output
         continue-on-error: true
 
       - name: HTTPS Validation
         run: python main.py --https
 
-      - name: Save Permanent State
+      - name: Cleanup After Scan
+        run: python cleanup.py
+
+      - name: Save State
         uses: actions/upload-artifact@v4
         with:
-          name: arista-permanent
-          path: |
-            output/best_ips.txt
-            output/live_bank.txt
-            output/tcp_live.txt
-            output/tls_live.txt
-            output/https_live.txt
-            output/fingerprint_results.txt
-            output/geo_cache.json
-            output/scan_cursor.txt
-            output/https_meta.json
+          name: arista-output
+          path: output
           overwrite: true
-          retention-days: 3
+          retention-days: 1
 
   fingerprint:
     needs: https
@@ -238,32 +212,26 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      - name: Restore Permanent State
+      - name: Restore State
         uses: actions/download-artifact@v4
         with:
-          name: arista-permanent
+          name: arista-output
           path: output
         continue-on-error: true
 
       - name: Fingerprint
         run: python main.py --fp
 
-      - name: Save Permanent State
+      - name: Cleanup After Scan
+        run: python cleanup.py
+
+      - name: Save State
         uses: actions/upload-artifact@v4
         with:
-          name: arista-permanent
-          path: |
-            output/best_ips.txt
-            output/live_bank.txt
-            output/tcp_live.txt
-            output/tls_live.txt
-            output/https_live.txt
-            output/fingerprint_results.txt
-            output/geo_cache.json
-            output/scan_cursor.txt
-            output/https_meta.json
+          name: arista-output
+          path: output
           overwrite: true
-          retention-days: 3
+          retention-days: 1
 
   geo:
     needs: fingerprint
@@ -280,32 +248,26 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      - name: Restore Permanent State
+      - name: Restore State
         uses: actions/download-artifact@v4
         with:
-          name: arista-permanent
+          name: arista-output
           path: output
         continue-on-error: true
 
       - name: GEO
         run: python main.py --geo
 
-      - name: Save Permanent State
+      - name: Cleanup After Scan
+        run: python cleanup.py
+
+      - name: Save State
         uses: actions/upload-artifact@v4
         with:
-          name: arista-permanent
-          path: |
-            output/best_ips.txt
-            output/live_bank.txt
-            output/tcp_live.txt
-            output/tls_live.txt
-            output/https_live.txt
-            output/fingerprint_results.txt
-            output/geo_cache.json
-            output/scan_cursor.txt
-            output/https_meta.json
+          name: arista-output
+          path: output
           overwrite: true
-          retention-days: 3
+          retention-days: 1
 
   finalize:
     needs: geo
@@ -322,32 +284,34 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      - name: Restore Permanent State
+      - name: Restore State
         uses: actions/download-artifact@v4
         with:
-          name: arista-permanent
+          name: arista-output
           path: output
         continue-on-error: true
 
       - name: Finalize
         run: python main.py --finalize
 
-      - name: Save Permanent State
+      # 🤖 اجرای اسکریپت تلگرام شما بلافاصله پس از فینالایز شدن خروجی‌ها
+      - name: Run Telegram Bot Clean & Send
+        continue-on-error: true
+        env:
+          CUSTOM_CAPTION: ${{ vars.CUSTOM_CAPTION }}
+          IP_COUNT_LIMIT: ${{ vars.IP_COUNT_LIMIT }}
+        run: python send_to_telegram.py
+
+      - name: Cleanup After Scan
+        run: python cleanup.py
+
+      - name: Save Final State
         uses: actions/upload-artifact@v4
         with:
-          name: arista-permanent
-          path: |
-            output/best_ips.txt
-            output/live_bank.txt
-            output/tcp_live.txt
-            output/tls_live.txt
-            output/https_live.txt
-            output/fingerprint_results.txt
-            output/geo_cache.json
-            output/scan_cursor.txt
-            output/https_meta.json
+          name: arista-output
+          path: output
           overwrite: true
-          retention-days: 3
+          retention-days: 1
 
       - name: Commit Final Output
         run: |
@@ -356,11 +320,10 @@ jobs:
           mkdir -p output
 
           git add output/best_ips.txt output/domains.txt output/results.txt 2>/dev/null || true
-          git add output/scan_cursor.txt 2>/dev/null || true
+          git add output/scan_cursor.txt output/current_part.txt 2>/dev/null || true
           git add output/tcp_live.txt output/tls_live.txt output/https_live.txt 2>/dev/null || true
-          git add output/fingerprint_results.txt 2>/dev/null || true
+          git add output/fingerprint_results.txt output/scanned_cache.txt 2>/dev/null || true
           git add output/geo_cache.json output/live_bank.txt 2>/dev/null || true
-          git add output/https_meta.json 2>/dev/null || true
 
           if ! git diff --cached --quiet; then
             git commit -m "ARISTA $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
