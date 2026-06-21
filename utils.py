@@ -1,4 +1,3 @@
-# utils.py
 TLS_PORTS = {443, 8443, 2053, 2083, 2087, 2096}
 
 def is_tls_port(port):
