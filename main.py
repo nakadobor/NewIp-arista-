@@ -6,8 +6,7 @@ from datetime import datetime, timedelta
 from downloader import download_sources
 from cleaner import clean_ips
 from splitter import split_file
-from cursor import reset_cursor, reset_source_index, load_source_index, save_source_index
-from cache import reset_for_new_scan, compact_cache_files
+from cursor import reset_cursor
 
 from scanner import (
     tcp_scan,
@@ -53,23 +52,10 @@ def exists(path):
 def should_update_bank():
     bank_file = "output/ip_bank.txt"
     clean_file = "output/clean_ips.txt"
-    source_index = load_source_index()
-    cfg = load_config()
-    sources = cfg.get("sources", [])
-    ips_per_source = cfg.get("ips_per_source", 5000)
-    
-    if source_index >= len(sources):
-        reset_source_index()
-        source_index = 0
-    
-    current_source = sources[source_index] if source_index < len(sources) else None
-    
-    if current_source is None:
-        return True
-    
+
     if not exists(bank_file) or not exists(clean_file):
         return True
-    
+
     try:
         mtime = os.path.getmtime(bank_file)
         last_update = datetime.fromtimestamp(mtime)
@@ -83,27 +69,6 @@ def should_update_bank():
         return True
 
 
-def get_next_source():
-    cfg = load_config()
-    sources = cfg.get("sources", [])
-    ips_per_source = cfg.get("ips_per_source", 5000)
-    source_index = load_source_index()
-    
-    if source_index >= len(sources):
-        reset_source_index()
-        source_index = 0
-    
-    current_source = sources[source_index] if source_index < len(sources) else None
-    
-    next_index = source_index + 1
-    if next_index >= len(sources):
-        next_index = 0
-    
-    save_source_index(next_index)
-    
-    return current_source, next_index
-
-
 def prepare():
     ensure_output()
 
@@ -111,45 +76,12 @@ def prepare():
     compact_cache_files()
 
     if should_update_bank():
-        cfg = load_config()
-        source_index = load_source_index()
-        sources = cfg.get("sources", [])
-        ips_per_source = cfg.get("ips_per_source", 5000)
-        
-        if source_index >= len(sources):
-            reset_source_index()
-            source_index = 0
-        
-        current_source = sources[source_index] if source_index < len(sources) else None
-        
-        if current_source is None:
-            current_source = sources[0] if sources else None
-        
-        print(f"DOWNLOADING FROM SOURCE {source_index}: {current_source}")
-        reset_for_new_scan()
-        
-        original_sources = cfg.get("sources", [])
-        cfg["sources"] = [current_source]
-        
-        with open("config.json", "w", encoding="utf-8") as f:
-            json.dump(cfg, f, indent=4)
-        
         print("DOWNLOAD START")
         download_sources()
         print("CLEAN START")
         clean_ips()
         reset_cursor()
         print("BANK UPDATED - CURSOR RESET")
-        
-        cfg["sources"] = original_sources
-        with open("config.json", "w", encoding="utf-8") as f:
-            json.dump(cfg, f, indent=4)
-        
-        next_index = source_index + 1
-        if next_index >= len(sources):
-            next_index = 0
-        save_source_index(next_index)
-        print(f"NEXT SOURCE INDEX: {next_index}")
 
 
 def run_tcp():
