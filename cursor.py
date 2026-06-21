@@ -1,7 +1,7 @@
-# cursor.py
 import os
 
 CURSOR_FILE = "output/scan_cursor.txt"
+SOURCE_INDEX_FILE = "output/source_index.txt"
 
 def ensure_output():
     os.makedirs("output", exist_ok=True)
@@ -31,11 +31,42 @@ def save_cursor(value):
     with open(CURSOR_FILE, "w", encoding="utf-8") as f:
         f.write(str(value))
 
+def load_source_index():
+    ensure_output()
+    if not os.path.exists(SOURCE_INDEX_FILE):
+        return 0
+    try:
+        with open(SOURCE_INDEX_FILE, "r", encoding="utf-8") as f:
+            value = f.read().strip()
+            if not value:
+                return 0
+            val = int(value)
+            return 0 if val < 0 else val
+    except:
+        return 0
+
+def save_source_index(value):
+    ensure_output()
+    try:
+        value = int(value)
+    except:
+        value = 0
+    if value < 0:
+        value = 0
+    with open(SOURCE_INDEX_FILE, "w", encoding="utf-8") as f:
+        f.write(str(value))
+
 def reset_cursor():
     save_cursor(0)
 
+def reset_source_index():
+    save_source_index(0)
+
 def cursor_exists():
     return os.path.exists(CURSOR_FILE)
+
+def source_index_exists():
+    return os.path.exists(SOURCE_INDEX_FILE)
 
 if __name__ == "__main__":
     print(load_cursor())
