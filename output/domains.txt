@@ -9,7 +9,6 @@ bugs.launchpad.net
 cloud.ohanaa.net
 cmailedge.halyco.net
 commons-pages.search.show
-crm.eastcool.com
 date.now
 docs.marcopacs.com
 exchange.koa.ir
@@ -38,7 +37,7 @@ mail.eastcool.com
 mail.hamta-gp.com
 mail.icdco.ir
 mail.iserver24.com
-mail.klevers-aryana.com
+mail.medilinkltd.com
 mail.nikarta.com
 mail.niksardpouya.com
 mail.niktak.com
@@ -50,7 +49,6 @@ oss.maxcdn.com
 performance.now
 php.avaneed.com
 plesk.com
-portal.eastcool.com
 rankmath.com
 react.dev
 s.w.org
