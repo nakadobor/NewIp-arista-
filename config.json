@@ -35,5 +35,5 @@
         "www.cloudflare.com",
         "cdn.cloudflare.net"
     ],
-    "ips_per_source": 5000
+    "ips_per_source": 1000
 }
