@@ -99,7 +99,7 @@ def run_tcp():
 
 
 def run_tls():
-    prepare()
+    ensure_output()
 
     if not exists(
         "output/tcp_live.txt"
@@ -121,7 +121,7 @@ def run_tls():
 
 
 def run_https():
-    prepare()
+    ensure_output()
 
     if not exists(
         "output/tls_live.txt"
@@ -143,7 +143,7 @@ def run_https():
 
 
 def run_fp():
-    prepare()
+    ensure_output()
 
     if not exists(
         "output/https_live.txt"
@@ -165,7 +165,7 @@ def run_fp():
 
 
 def run_geo():
-    prepare()
+    ensure_output()
 
     if not exists(
         "output/fingerprint_results.txt"
@@ -187,12 +187,22 @@ def run_geo():
 
 
 def run_finalize():
-    prepare()
+    ensure_output()
 
-    # اول چک می‌کنیم فایل خروجی مرحله GEO وجود دارد یا خیر
-    if not exists("output/results.txt"):
-        print("NO RESULTS")
+    # اولویت اول: پیدا کردن نتایج نهایی بعد از فیلترهای GEO یا هویت
+    source_file = None
+    if exists("output/results.txt"):
+        source_file = "output/results.txt"
+    elif exists("output/fingerprint_results.txt"):
+        source_file = "output/fingerprint_results.txt"
+    elif exists("output/https_live.txt"):
+        source_file = "output/https_live.txt"
+
+    if not source_file:
+        print("NO VERIFIED DATA FOUND ACROSS ANY STAGES")
         return
+
+    print(f"FOUND VALID DATA IN {source_file}, PROCEEDING TO FINALIZE...")
 
     print("OPTIMIZE CACHE")
     optimize_stage_files()
@@ -211,16 +221,15 @@ def run_finalize():
     except Exception as e:
         print(f"Ranker encountered an issue: {e}")
 
-    # 🟢 چتر نجات دقیقاً در ایستگاه پایانی:
-    # اگر رنکر فایل را نساخت یا خالیش کرد، ما از روی نتایج تایید شده، خودمان فایل را احیا می‌کنیم.
+    # 🟢 چتر نجات فوق هوشمند در ایستگاه نهایی
     if not exists("output/best_ips.txt") or os.path.getsize("output/best_ips.txt") == 0:
-        print("⚠️ best_ips.txt was missing or empty! Restoring from verified results...")
+        print(f"⚠️ best_ips.txt was missing or empty! Forcing restore from {source_file}...")
         try:
-            with open("output/results.txt", "r", encoding="utf-8") as rf:
+            with open(source_file, "r", encoding="utf-8") as rf:
                 ips = rf.read()
             with open("output/best_ips.txt", "w", encoding="utf-8") as bf:
                 bf.write(ips)
-            print("✅ FORCE CREATED BEST_IPS.TXT FROM RESULTS")
+            print("✅ FORCE CREATED BEST_IPS.TXT SUCCESSFULLY")
         except Exception as e:
             print(f"Error restoring results: {e}")
     else:
