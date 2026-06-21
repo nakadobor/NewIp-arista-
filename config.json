@@ -1,3 +1,4 @@
+# config.json
 {
     "sources": [
         "https://raw.githubusercontent.com/123jjck/cdn-ip-ranges/main/telegram/telegram_plain_ipv4.txt",
@@ -34,5 +35,6 @@
         "cloudflare.com",
         "www.cloudflare.com",
         "cdn.cloudflare.net"
-    ]
+    ],
+    "ips_per_source": 10000
 }
