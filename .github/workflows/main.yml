@@ -66,14 +66,27 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # 🟢 بررسی وجود آرتیفکت برای جلوگیری از کراش اکشن
+      - name: Check if Artifact Exists
+        id: check_artifact
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const match = artifacts.data.artifacts.find(a => a.name === "arista-output" && !a.expired);
+            core.setOutput("exists", match ? "true" : "false");
+
       - name: Restore Rolling State
+        if: steps.check_artifact.outputs.exists == 'true'
         uses: actions/download-artifact@v4
         with:
           name: arista-output
           path: output
         continue-on-error: true
 
-      # 🟢 این گام جدید تضمین می‌کند که حتی اگر دانلود بالا شکست خورد، پوشه output حتماً وجود داشته باشد
       - name: Ensure Output Directory Exists
         run: |
           mkdir -p output
@@ -96,8 +109,6 @@ jobs:
         run: |
           if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
 
-      # 🟢 این گامِ آپلود در انتهای prepare، آرتیفکت arista-output را روی سرور گیت‌هاب خلق می‌کند
-      # در نتیجه جاب‌های بعدی (TCP, TLS و...) دیگر با خطای Artifact not found مواجه نخواهند شد!
       - name: Save Rolling State
         uses: actions/upload-artifact@v4
         with:
@@ -316,7 +327,6 @@ jobs:
       - name: Finalize
         run: python main.py --finalize
 
-      # 🤖 اجرای اسکریپت تلگرام شما با سیستم جدید ورودی‌ها
       - name: Run Telegram Bot Clean & Send
         continue-on-error: true
         env:
