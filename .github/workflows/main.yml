@@ -73,9 +73,14 @@ jobs:
           path: output
         continue-on-error: true
 
-      - name: Prepare Bank
+      # 🟢 این گام جدید تضمین می‌کند که حتی اگر دانلود بالا شکست خورد، پوشه output حتماً وجود داشته باشد
+      - name: Ensure Output Directory Exists
         run: |
           mkdir -p output
+          touch output/.keep
+
+      - name: Prepare Bank
+        run: |
           if [ ! -s output/ip_bank.txt ]; then
             python downloader.py
           fi
@@ -91,6 +96,8 @@ jobs:
         run: |
           if [ -f cleanup.py ]; then python cleanup.py; else echo "WARNING: cleanup.py missing, skipping."; fi
 
+      # 🟢 این گامِ آپلود در انتهای prepare، آرتیفکت arista-output را روی سرور گیت‌هاب خلق می‌کند
+      # در نتیجه جاب‌های بعدی (TCP, TLS و...) دیگر با خطای Artifact not found مواجه نخواهند شد!
       - name: Save Rolling State
         uses: actions/upload-artifact@v4
         with:
