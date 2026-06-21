@@ -35,13 +35,12 @@ mail.abniehafarin.com
 mail.didgahcrm.com
 mail.didgahweb.com
 mail.eastcool.com
-mail.hamta-gp.com
 mail.icdco.ir
 mail.iserver24.com
 mail.klevers-aryana.com
-mail.medilinkltd.com
 mail.nikarta.com
 mail.niksardpouya.com
+mail.niktak.com
 mail.uniq24.com
 mail.unv.ir
 neon.dev
