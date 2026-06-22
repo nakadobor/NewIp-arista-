@@ -2,7 +2,7 @@
     "sources": [
         "https://raw.githubusercontent.com/123jjck/cdn-ip-ranges/main/cloudflare/cloudflare_plain_ipv4.txt"
     ],
-    "ports": [443, 8443, 2053, 2083, 2087, 2096],
+    "ports": [443],
     "threads": 300,
     "batch_size": 60000,
     "retries": 1,
