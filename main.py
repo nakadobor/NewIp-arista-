@@ -62,30 +62,99 @@ def exists(path):
 def should_update_bank():
     return True
 
-# 🔴 تابع جدید برای تولید آی‌پی‌های ناب کلودفلر و تزریق به دیتابیس محلی
+
+# 🔴 تابع جدید و هوشمند تولید آی‌پی‌های ناب کلودفلر با مدیریت کَش چرخشی ۳ روزه
 def generate_pure_cloudflare_bank():
     """
-    تولید آی‌پی‌های تکی تصادفی از رنج‌های رسمی کلودفلر و ذخیره در فایل بانک آی‌پی
+    تولید آی‌پی‌های تکی تصادفی از رنج‌های رسمی کلودفلر با حذف تکراری‌ها
+    و مکانیسم خودکار پاک‌سازی و ریست کل کَش هر ۳ روز یک‌بار
     """
     print("🔮 GENERATING PURE CLOUDFLARE IP BANK...")
-    pure_ips = []
     
-    # از هر رنج ۱۵ گانه کلودفلر تعداد ۵۰ آی‌پی تصادفی استخراج می‌کند (قابل تغییر است)
+    scanned_cache_path = "output/scanned_cache.txt"
+    timestamp_path = "output/cache_timestamp.txt"
+    os.makedirs("output", exist_ok=True)
+    
+    # ⏱️ بررسی مکانیسم انقضای ۳ روزه
+    current_time = datetime.now()
+    should_reset_cache = False
+    
+    if os.path.exists(timestamp_path):
+        try:
+            with open(timestamp_path, "r", encoding="utf-8") as tf:
+                time_str = tf.read().strip()
+                first_scan_time = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
+            
+            # اگر از زمان اولین اسکن بیشتر از ۳ روز (۷۲ ساعت) گذشته باشه
+            if current_time - first_scan_time >= timedelta(days=3):
+                should_reset_cache = True
+                print("⏰ 3 DAYS PASSED! Expiring old cache for a fresh scan cycle...")
+        except Exception as e:
+            print(f"⚠️ Error reading cache timestamp, forcing reset: {e}")
+            should_reset_cache = True
+    else:
+        # اگر فایل تایم‌استمپ وجود نداره، یعنی اولین باره و تاریخ الان رو ثبت می‌کنیم
+        try:
+            with open(timestamp_path, "w", encoding="utf-8") as tf:
+                tf.write(current_time.strftime("%Y-%m-%d %H:%M:%S"))
+        except Exception as e:
+            print(f"⚠️ Error writing initial timestamp: {e}")
+
+    # 🧹 اجرای ریست کَش در صورت اتمام ۳ روز
+    if should_reset_cache:
+        if os.path.exists(scanned_cache_path):
+            try:
+                os.remove(scanned_cache_path)
+                print("🗑️ scanned_cache.txt deleted successfully.")
+            except Exception as e:
+                print(f"⚠️ Could not delete cache file: {e}")
+        
+        # تاریخ جدید رو برای ۳ روز بعدی ست کن
+        try:
+            with open(timestamp_path, "w", encoding="utf-8") as tf:
+                tf.write(current_time.strftime("%Y-%m-%d %H:%M:%S"))
+            print("🆕 New 3-day cycle started.")
+        except Exception as e:
+            print(f"⚠️ Error updating timestamp: {e}")
+
+    # 📖 خواندن کَش (اگر ریست شده باشه، خالیه)
+    scanned_ips = set()
+    if os.path.exists(scanned_cache_path):
+        with open(scanned_cache_path, "r", encoding="utf-8") as cf:
+            scanned_ips = set(line.strip() for line in cf if line.strip())
+
+    pure_ips = []
     ips_per_cidr = 100 
     
+    # ⚡ تولید آی‌پی‌ها و عبور از فیلتر تکراری‌ها
     for cidr in CLOUDFLARE_CIDRS:
         try:
             network = ipaddress.ip_network(cidr)
             hosts = list(network.hosts())
-            sample_size = min(ips_per_cidr, len(hosts))
-            sampled = random.sample(hosts, sample_size)
+            
+            available_hosts = [str(ip) for ip in hosts if str(ip) not in scanned_ips]
+            
+            # اگر کل رنج اسکن شده بود و خالی بود، موقتاً رنج رو باز کن
+            if len(available_hosts) < ips_per_cidr:
+                available_hosts = [str(ip) for ip in hosts]
+                
+            sample_size = min(ips_per_cidr, len(available_hosts))
+            sampled = random.sample(available_hosts, sample_size)
             for ip in sampled:
-                pure_ips.append(str(ip))
+                pure_ips.append(ip)
         except Exception as e:
             print(f"⚠️ Error processing CIDR {cidr}: {e}")
             
-    # پیدا کردن مسیر فایل بانک آی‌پی (معمولاً ip_bank.txt یا ساختاری شبیه به این در پروژه شماست)
-    # اسکنر شما از دایرکتوری دیتا یا همین روت پروژه استفاده می‌کند. ما فایل استاندارد را می‌نویسیم:
+    # 💾 ذخیره آی‌پی‌های جدید در کَش
+    try:
+        for ip in pure_ips:
+            scanned_ips.add(ip)
+        with open(scanned_cache_path, "w", encoding="utf-8") as cf:
+            cf.write("\n".join(scanned_ips))
+    except Exception as e:
+        print(f"⚠️ Warning updating scanned_cache.txt: {e}")
+
+    # 🚀 نوشتن بانک اصلی برای اسکنر لایه TCP
     bank_path = "ip_bank.txt"
     try:
         with open(bank_path, "w", encoding="utf-8") as f:
@@ -150,6 +219,7 @@ def run_tcp():
     print(
         "TCP DONE"
     )
+
 
 def run_tls():
     ensure_output()
