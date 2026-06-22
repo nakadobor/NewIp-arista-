@@ -125,10 +125,11 @@ def run_tcp():
     prepare()
 
     print(
-        "ROLLING SPLIT"
+        "⚡ BYPASSING SPLIT - SCANNING ALL PURE IPS AT ONCE"
     )
 
-    input_file = split_file()
+    # مستقیم فایل اصلی بانک را به اسکنر می‌دهد
+    input_file = "ip_bank.txt" 
 
     if not exists(
         input_file
@@ -149,7 +150,6 @@ def run_tcp():
     print(
         "TCP DONE"
     )
-
 
 def run_tls():
     ensure_output()
