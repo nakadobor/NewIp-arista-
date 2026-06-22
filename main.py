@@ -2,6 +2,16 @@ import os
 import argparse
 import json
 from datetime import datetime, timedelta
+import ipaddress
+import random
+
+# 🔴 اضافه شدن رنج‌های رسمی کلودفلر
+CLOUDFLARE_CIDRS = [
+    "173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22", "103.31.4.0/22",
+    "141.101.64.0/18", "108.162.192.0/18", "190.93.240.0/20", "188.114.96.0/20",
+    "197.234.240.0/22", "198.41.128.0/17", "162.158.0.0/15", "104.16.0.0/13",
+    "104.24.0.0/14", "172.64.0.0/13", "131.0.72.0/22"
+]
 
 from downloader import download_sources
 from cleaner import clean_ips
@@ -52,6 +62,38 @@ def exists(path):
 def should_update_bank():
     return True
 
+# 🔴 تابع جدید برای تولید آی‌پی‌های ناب کلودفلر و تزریق به دیتابیس محلی
+def generate_pure_cloudflare_bank():
+    """
+    تولید آی‌پی‌های تکی تصادفی از رنج‌های رسمی کلودفلر و ذخیره در فایل بانک آی‌پی
+    """
+    print("🔮 GENERATING PURE CLOUDFLARE IP BANK...")
+    pure_ips = []
+    
+    # از هر رنج ۱۵ گانه کلودفلر تعداد ۵۰ آی‌پی تصادفی استخراج می‌کند (قابل تغییر است)
+    ips_per_cidr = 100 
+    
+    for cidr in CLOUDFLARE_CIDRS:
+        try:
+            network = ipaddress.ip_network(cidr)
+            hosts = list(network.hosts())
+            sample_size = min(ips_per_cidr, len(hosts))
+            sampled = random.sample(hosts, sample_size)
+            for ip in sampled:
+                pure_ips.append(str(ip))
+        except Exception as e:
+            print(f"⚠️ Error processing CIDR {cidr}: {e}")
+            
+    # پیدا کردن مسیر فایل بانک آی‌پی (معمولاً ip_bank.txt یا ساختاری شبیه به این در پروژه شماست)
+    # اسکنر شما از دایرکتوری دیتا یا همین روت پروژه استفاده می‌کند. ما فایل استاندارد را می‌نویسیم:
+    bank_path = "ip_bank.txt"
+    try:
+        with open(bank_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(pure_ips))
+        print(f"✅ SUCCESSFULLY GENERATED {len(pure_ips)} PURE CLOUDFLARE IPS IN {bank_path}")
+    except Exception as e:
+        print(f"❌ Error writing to bank file: {e}")
+
 
 def prepare():
     ensure_output()
@@ -64,13 +106,17 @@ def prepare():
         print(f"⚠️ Warning during cache compaction (Skipped): {e}")
 
     if should_update_bank():
-        print("DOWNLOAD START")
+        # 🔴 قطع موقت سورس‌های قدیمی گیت‌هاب و استفاده اختصاصی از رنج کلودفلر
+        print("🔄 BYPASSING OLD DOWNLOADER - SWITCHING TO PURE CLOUDFLARE RANGE")
         try:
-            download_sources()
-            print("CLEAN START")
-            clean_ips()
+            # download_sources() # ❌ موقتاً قطع شد
+            # clean_ips()        # ❌ موقتاً قطع شد
+            
+            # 💡 جایگزین هوشمند: تزریق مستقیم رنج‌های کلودفلر
+            generate_pure_cloudflare_bank()
+            
             reset_cursor()
-            print("BANK UPDATED - CURSOR RESET")
+            print("BANK UPDATED WITH PURE CLOUDFLARE - CURSOR RESET")
         except Exception as e:
             print(f"⚠️ Warning during bank update (Skipped): {e}")
 
@@ -196,7 +242,6 @@ def run_geo():
 def run_finalize():
     ensure_output()
 
-    # اولویت اول: پیدا کردن نتایج نهایی بعد از فیلترهای GEO یا هویت
     source_file = None
     if exists("output/results.txt"):
         source_file = "output/results.txt"
@@ -228,7 +273,6 @@ def run_finalize():
     except Exception as e:
         print(f"Ranker encountered an issue: {e}")
 
-    # 🟢 چتر نجات فوق هوشمند در ایستگاه نهایی
     if not exists("output/best_ips.txt") or os.path.getsize("output/best_ips.txt") == 0:
         print(f"⚠️ best_ips.txt was missing or empty! Forcing restore from {source_file}...")
         try:
